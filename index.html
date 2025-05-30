@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELOHIM - Advanced OSINT Tool</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Cyberpunk Background Effects */
+        .cyber-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .cyber-grid {
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: gridMove 20s linear infinite;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .glitch-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 98px,
+                rgba(0, 255, 65, 0.03) 100px
+            );
+            z-index: -1;
+            animation: glitchMove 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glitchMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(2px); }
+        }
+        
+        /* Header Styling */
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 2px solid #00ff41;
+            box-shadow: 0 0 20px #00ff41;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 4rem;
+            font-weight: 900;
+            color: #00ff41;
+            text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41;
+            margin-bottom: 0.5rem;
+            animation: logoGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes logoGlow {
+            0% { text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41; }
+            100% { text-shadow: 0 0 30px #00ff41, 0 0 60px #00ff41, 0 0 80px #00ff41; }
+        }
+        
+        .subtitle {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            color: #80ff80;
+            margin-bottom: 1rem;
+        }
+        
+        .author {
+            font-size: 0.9rem;
+            color: #40ff40;
+            opacity: 0.8;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .tab-btn {
+            background: rgba(0, 255, 65, 0.1);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 0.8rem 1.5rem;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .tab-btn:hover:before {
+            left: 100%;
+        }
+        
+        .tab-btn:hover,
+        .tab-btn.active {
+            background: rgba(0, 255, 65, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Form Elements */
+        .search-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: #00ff41;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #00ff41;
+            padding-bottom: 0.5rem;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .input-field {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 0.8rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+            border-color: #40ff40;
+        }
+        
+        .input-field::placeholder {
+            color: rgba(0, 255, 65, 0.6);
+        }
+        
+        .search-btn {
+            background: linear-gradient(45deg, #00ff41, #40ff40);
+            border: none;
+            color: #000;
+            padding: 0.8rem 2rem;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            min-width: 150px;
+        }
+        
+        .search-btn:hover {
+            background: linear-gradient(45deg, #40ff40, #80ff80);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .option-card {
+            background: rgba(0, 255, 65, 0.05);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .option-card:hover {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .cyber-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ff41;
+            background: transparent;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .cyber-checkbox:checked {
+            background: #00ff41;
+        }
+        
+        .cyber-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: #000;
+            font-weight: bold;
+            left: 3px;
+            top: -2px;
+        }
+        
+        /* Results Area */
+        .results-container {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            min-height: 300px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .result-item {
+            background: rgba(0, 255, 65, 0.05);
+            border-left: 4px solid #00ff41;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .result-item:hover {
+            background: rgba(0, 255, 65, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .result-platform {
+            font-weight: bold;
+            color: #40ff40;
+            margin-bottom: 0.5rem;
+        }
+        
+        .result-url {
+            color: #80ff80;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .result-url:hover {
+            color: #00ff41;
+            text-shadow: 0 0 5px #00ff41;
+        }
+        
+        .result-status {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-left: 1rem;
+        }
+        
+        .status-found {
+            background: rgba(0, 255, 65, 0.3);
+            color: #00ff41;
+        }
+        
+        .status-not-found {
+            background: rgba(255, 0, 0, 0.3);
+            color: #ff4040;
+        }
+        
+        .status-checking {
+            background: rgba(255, 255, 0, 0.3);
+            color: #ffff40;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .loading-text {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            color: #00ff41;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 255, 65, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #40ff40, #80ff80);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .tab-nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tab-btn {
+                width: 200px;
+            }
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #40ff40;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg">
+        <div class="cyber-grid"></div>
+        <div class="glitch-overlay"></div>
+    </div>
+    
+    <div class="header">
+        <h1 class="logo">ELOHIM</h1>
+        <p class="subtitle">Advanced OSINT Reconnaissance Framework</p>
+        <p class="author">By: Scav-enger | Professional Cybersecurity Tool</p>
+    </div>
+    
+    <div class="container">
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="username">Username Search</button>
+            <button class="tab-btn" data-tab="social">Social Media Recon</button>
+            <button class="tab-btn" data-tab="email">Email Investigation</button>
+            <button class="tab-btn" data-tab="domain">Domain Analysis</button>
+            <button class="tab-btn" data-tab="phone">Phone Number OSINT</button>
+            <button class="tab-btn" data-tab="advanced">Advanced Search</button>
+        </nav>
+        
+        <!-- Username Search Tab -->
+        <div class="tab-content active" id="username">
+            <div class="search-section">
+                <h2 class="section-title">Username Intelligence Gathering</h2>
+                <div class="input-group">
+                    <input type="text" class="input-field" id="username-input" placeholder="Enter username to investigate...">
+                    <button class="search-btn" onclick="searchUsername()">Initiate Scan</button>
+                </div>
+                
+                <div class="options-grid">
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="social-platforms" checked>
+                            <label>Social Media Platforms</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="gaming-platforms" checked>
+                            <label>Gaming Platforms</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="dev-platforms" checked>
+                            <label>Developer Platforms</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="business-platforms" checked>
+                            <label>Business Networks</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="dating-platforms">
+                            <label>Dating Platforms</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="forum-platforms">
+                            <label>Forums & Communities</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="username-results">
+                <div class="loading" id="username-loading">
+                    <div class="loading-text">Scanning digital footprint...</div>
+                    <div class="loading-bar">
+                        <div class="loading-progress" id="username-progress"></div>
+                    </div>
+                </div>
+                <div id="username-output">
+                    <p style="color: #80ff80; text-align: center; padding: 2rem;">
+                        Enter a username and select scan options to begin reconnaissance.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Social Media Recon Tab -->
+        <div class="tab-content" id="social">
+            <div class="search-section">
+                <h2 class="section-title">Social Media Deep Reconnaissance</h2>
+                <div class="input-group">
+                    <input type="text" class="input-field" id="social-input" placeholder="Enter username, email, or phone number...">
+                    <button class="search-btn" onclick="searchSocial()">Deep Scan</button>
+                </div>
+                
+                <div class="options-grid">
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="profile-analysis" checked>
+                            <label>Profile Analysis</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="connection-mapping" checked>
+                            <label>Connection Mapping</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="content-analysis">
+                            <label>Content Analysis</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="metadata-extraction">
+                            <label>Metadata Extraction</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="social-results">
+                <div class="loading" id="social-loading">
+                    <div class="loading-text">Analyzing social media presence...</div>
+                    <div class="loading-bar">
+                        <div class="loading-progress" id="social-progress"></div>
+                    </div>
+                </div>
+                <div id="social-output">
+                    <p style="color: #80ff80; text-align: center; padding: 2rem;">
+                        Configure social media reconnaissance parameters and initiate deep scan.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Email Investigation Tab -->
+        <div class="tab-content" id="email">
+            <div class="search-section">
+                <h2 class="section-title">Email Address Investigation</h2>
+                <div class="input-group">
+                    <input type="email" class="input-field" id="email-input" placeholder="Enter email address to investigate...">
+                    <button class="search-btn" onclick="searchEmail()">Investigate</button>
+                </div>
+                
+                <div class="options-grid">
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="breach-check" checked>
+                            <label>Data Breach Check</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="domain-reputation" checked>
+                            <label>Domain Reputation</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="account-enumeration" checked>
+                            <label>Account Enumeration</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="pasteleaks">
+                            <label>Pastebin Leaks</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="email-results">
+                <div class="loading" id="email-loading">
+                    <div class="loading-text">Investigating email intelligence...</div>
+                    <div class="loading-bar">
+                        <div class="loading-progress" id="email-progress"></div>
+                    </div>
+                </div>
+                <div id="email-output">
+                    <p style="color: #80ff80; text-align: center; padding: 2rem;">
+                        Enter an email address to begin comprehensive investigation.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Domain Analysis Tab -->
+        <div class="tab-content" id="domain">
+            <div class="search-section">
+                <h2 class="section-title">Domain & Infrastructure Analysis</h2>
+                <div class="input-group">
+                    <input type="text" class="input-field" id="domain-input" placeholder="Enter domain or IP address...">
+                    <button class="search-btn" onclick="searchDomain()">Analyze</button>
+                </div>
+                
+                <div class="options-grid">
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="whois-lookup" checked>
+                            <label>WHOIS Lookup</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="dns-enumeration" checked>
+                            <label>DNS Enumeration</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="subdomain-enum" checked>
+                            <label>Subdomain Discovery</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="ssl-analysis">
+                            <label>SSL/TLS Analysis</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="wayback-machine">
+                            <label>Historical Analysis</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="threat-intel">
+                            <label>Threat Intelligence</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="domain-results">
+                <div class="loading" id="domain-loading">
+                    <div class="loading-text">Analyzing domain infrastructure...</div>
+                    <div class="loading-bar">
+                        <div class="loading-progress" id="domain-progress"></div>
+                    </div>
+                </div>
+                <div id="domain-output">
+                    <p style="color: #80ff80; text-align: center; padding: 2rem;">
+                        Enter a domain or IP address to begin infrastructure analysis.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Phone Number OSINT Tab -->
+        <div class="tab-content" id="phone">
+            <div class="search-section">
+                <h2 class="section-title">Phone Number Intelligence</h2>
+                <div class="input-group">
+                    <input type="tel" class="input-field" id="phone-input" placeholder="Enter phone number (+1234567890)...">
+                    <button class="search-btn" onclick="searchPhone()">Trace</button>
+                </div>
+                
+                <div class="options-grid">
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="carrier-lookup" checked>
+                            <label>Carrier Identification</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="location-lookup" checked>
+                            <label>Location Analysis</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="social-phone">
+                            <label>Social Media Links</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="spam-check">
+                            <label>Spam/Scam Database</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="phone-results">
+                <div class="loading" id="phone-loading">
+                    <div class="loading-text">Tracing phone number intelligence...</div>
+                    <div class="loading-bar">
+                        <div class="loading-progress" id="phone-progress"></div>
+                    </div>
+                </div>
+                <div id="phone-output">
+                    <p style="color: #80ff80; text-align: center; padding: 2rem;">
+                        Enter a phone number to begin intelligence gathering.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Search Tab -->
+        <div class="tab-content" id="advanced">
+            <div class="search-section">
+                <h2 class="section-title">Advanced Multi-Vector Search</h2>
+                <div class="input-group">
+                    <input type="text" class="input-field" id="advanced-input" placeholder="Enter any identifier (name, username, email, domain...)">
+                    <button class="search-btn" onclick="searchAdvanced()">Full Spectrum Scan</button>
+                </div>
+                
+                <div class="options-grid">
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="comprehensive-scan" checked>
+                            <label>Comprehensive Scan</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="cross-reference" checked>
+                            <label>Cross-Reference Analysis</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="pattern-analysis" checked>
+                            <label>Pattern Analysis</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="ai-correlation">
+                            <label>AI Correlation Engine</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="export-report">
+                            <label>Generate Report</label>
+                        </div>
+                    </div>
+                    <div class="option-card">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="cyber-checkbox" id="timeline-analysis">
+                            <label>Timeline Analysis</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="advanced-results">
+                <div class="loading" id="advanced-loading">
+                    <div class="loading-text">Executing full spectrum reconnaissance...</div>
+                    <div class="loading-bar">
+                        <div class="loading-progress" id="advanced-progress"></div>
+                    </div>
+                </div>
+                <div id="advanced-output">
+                    <p style="color: #80ff80; text-align: center; padding: 2rem;">
+                        Enter any identifier to begin advanced multi-vector intelligence gathering.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab Management
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.tab;
+                
+                // Update active tab button
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update active tab content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(target).classList.add('active');
+            });
+        });
+        
+        // Simulated OSINT Database
+        const osintDatabase = {
+            socialPlatforms: [
+                'Instagram', 'Twitter', 'Facebook', 'LinkedIn', 'TikTok', 'YouTube',
+                'Snapchat', 'Pinterest', 'Reddit', 'Discord', 'Telegram', 'WhatsApp',
+                'Clubhouse', 'Twitch', 'GitHub', 'GitLab', 'Dribbble', 'Behance'
+            ],
+            gamingPlatforms: [
+                'Steam', 'Xbox Live', 'PlayStation Network', 'Battle.net', 'Epic Games',
+                'Origin', 'Uplay', 'GOG', 'Twitch', 'Discord Gaming'
+            ],
+            businessPlatforms: [
+                'LinkedIn', 'Xing', 'AngelList', 'Crunchbase', 'F6S', 'Meetup',
+                'Eventbrite', 'Slideshare', 'Scribd'
+            ],
+            devPlatforms: [
+                'GitHub', 'GitLab', 'Bitbucket', 'SourceForge', 'CodePen', 'JSFiddle',
+                'Stack Overflow', 'HackerRank', 'LeetCode', 'Kaggle'
+            ],
+            datingPlatforms: [
+                'Tinder', 'Bumble', 'Hinge', 'OkCupid', 'Match.com', 'eHarmony',
+                'Plenty of Fish', 'Zoosk', 'Coffee Meets Bagel'
+            ],
+            forumPlatforms: [
+                'Reddit', 'Quora', 'Stack Overflow', '4chan', '8chan', 'Voat',
+                'Disqus', 'Medium', 'DeviantArt', 'Flickr'
+            ]
+        };
+        
+        // Search Functions
+        async function searchUsername() {
+            const username = document.getElementById('username-input').value.trim();
+            if (!username) {
+                alert('Please enter a username to search.');
+                return;
+            }
+            
+            const loading = document.getElementById('username-loading');
+            const output = document.getElementById('username-output');
+            const progress = document.getElementById('username-progress');
+            
+            loading.style.display = 'block';
+            output.innerHTML = '';
+            
+            // Get selected platforms
+            const selectedPlatforms = [];
+            if (document.getElementById('social-platforms').checked) selectedPlatforms.push(...osintDatabase.socialPlatforms);
+            if (document.getElementById('gaming-platforms').checked) selectedPlatforms.push(...osintDatabase.gamingPlatforms);
+            if (document.getElementById('dev-platforms').checked) selectedPlatforms.push(...osintDatabase.devPlatforms);
+            if (document.getElementById('business-platforms').checked) selectedPlatforms.push(...osintDatabase.businessPlatforms);
+            if (document.getElementById('dating-platforms').checked) selectedPlatforms.push(...osintDatabase.datingPlatforms);
+            if (document.getElementById('forum-platforms').checked) selectedPlatforms.push(...osintDatabase.forumPlatforms);
+            
+            let results = '';
+            let completed = 0;
+            
+            for (const platform of selectedPlatforms) {
+                // Simulate search delay
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+                
+                completed++;
+                const progressPercent = (completed / selectedPlatforms.length) * 100;
+                progress.style.width = progressPercent + '%';
+                
+                // Simulate random results
+                const found = Math.random() > 0.6;
+                const status = found ? 'found' : 'not-found';
+                const statusText = found ? 'FOUND' : 'NOT FOUND';
+                const url = found ? `https://${platform.toLowerCase().replace(/\s+/g, '')}.com/${username}` : 'N/A';
+                
+                results += `
+                    <div class="result-item">
+                        <div class="result-platform">${platform}</div>
+                        <div>
+                            ${found ? `<a href="${url}" target="_blank" class="result-url">${url}</a>` : 'No profile found'}
+                            <span class="result-status status-${status}">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+                
+                output.innerHTML = results;
+            }
+            
+            loading.style.display = 'none';
+            
+            if (results === '') {
+                output.innerHTML = '<p style="color: #ff4040; text-align: center; padding: 2rem;">No platforms selected for scanning.</p>';
+            }
+        }
+        
+        async function searchSocial() {
+            const query = document.getElementById('social-input').value.trim();
+            if (!query) {
+                alert('Please enter a search term.');
+                return;
+            }
+            
+            await simulateSearch('social', [
+                'Profile metadata extracted',
+                'Connection graph mapped',
+                'Content analysis completed',
+                'Geolocation data found',
+                'Associated accounts discovered'
+            ]);
+        }
+        
+        async function searchEmail() {
+            const email = document.getElementById('email-input').value.trim();
+            if (!email) {
+                alert('Please enter an email address.');
+                return;
+            }
+            
+            await simulateSearch('email', [
+                'Data breach check completed',
+                'Domain reputation analyzed',
+                'Account enumeration finished',
+                'Pastebin leaks searched',
+                'Associated services identified'
+            ]);
+        }
+        
+        async function searchDomain() {
+            const domain = document.getElementById('domain-input').value.trim();
+            if (!domain) {
+                alert('Please enter a domain or IP address.');
+                return;
+            }
+            
+            await simulateSearch('domain', [
+                'WHOIS information retrieved',
+                'DNS records enumerated',
+                'Subdomains discovered',
+                'SSL certificate analyzed',
+                'Historical data gathered',
+                'Threat intelligence checked'
+            ]);
+        }
+        
+        async function searchPhone() {
+            const phone = document.getElementById('phone-input').value.trim();
+            if (!phone) {
+                alert('Please enter a phone number.');
+                return;
+            }
+            
+            await simulateSearch('phone', [
+                'Carrier identification complete',
+                'Location data analyzed',
+                'Social media connections found',
+                'Spam database checked',
+                'VoIP detection performed'
+            ]);
+        }
+        
+        async function searchAdvanced() {
+            const query = document.getElementById('advanced-input').value.trim();
+            if (!query) {
+                alert('Please enter a search term.');
+                return;
+            }
+            
+            await simulateSearch('advanced', [
+                'Multi-vector analysis initiated',
+                'Cross-platform correlation completed',
+                'Pattern matching algorithms executed',
+                'AI correlation engine processing',
+                'Timeline reconstruction finished',
+                'Comprehensive report generated'
+            ]);
+        }
+        
+        async function simulateSearch(type, steps) {
+            const loading = document.getElementById(`${type}-loading`);
+            const output = document.getElementById(`${type}-output`);
+            const progress = document.getElementById(`${type}-progress`);
+            
+            loading.style.display = 'block';
+            output.innerHTML = '';
+            
+            let results = '';
+            
+            for (let i = 0; i < steps.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 1000));
+                
+                const progressPercent = ((i + 1) / steps.length) * 100;
+                progress.style.width = progressPercent + '%';
+                
+                results += `
+                    <div class="result-item">
+                        <div class="result-platform">Step ${i + 1}</div>
+                        <div>${steps[i]} <span class="result-status status-found">COMPLETED</span></div>
+                    </div>
+                `;
+                
+                output.innerHTML = results;
+            }
+            
+            // Add final summary
+            results += `
+                <div class="result-item" style="border-left-color: #40ff40; background: rgba(0, 255, 65, 0.1);">
+                    <div class="result-platform">SCAN COMPLETE</div>
+                    <div>All reconnaissance modules executed successfully. ${Math.floor(Math.random() * 50 + 10)} data points collected.</div>
+                </div>
+            `;
+            
+            output.innerHTML = results;
+            loading.style.display = 'none';
+        }
+        
+        // Enter key support for all input fields
+        document.querySelectorAll('.input-field').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const tab = input.closest('.tab-content').id;
+                    switch(tab) {
+                        case 'username': searchUsername(); break;
+                        case 'social': searchSocial(); break;
+                        case 'email': searchEmail(); break;
+                        case 'domain': searchDomain(); break;
+                        case 'phone': searchPhone(); break;
+                        case 'advanced': searchAdvanced(); break;
+                    }
+                }
+            });
+        });
+        
+        // Random glitch effects
+        setInterval(() => {
+            const elements = document.querySelectorAll('.logo, .section-title');
+            elements.forEach(el => {
+                if (Math.random() > 0.95) {
+                    el.style.textShadow = '2px 0 #ff0040, -2px 0 #00ff41';
+                    setTimeout(() => {
+                        el.style.textShadow = '';
+                    }, 100);
+                }
+            });
+        }, 2000);
+    </script>
+</body>
+</html>

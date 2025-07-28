@@ -1,0 +1,88 @@
+# ELOHIM Platform URL Database
+# Format: PlatformName=URL_Template
+# Use {} as placeholder for username
+
+# Social Media Platforms
+Instagram=https://instagram.com/{}
+Twitter=https://twitter.com/{}
+Facebook=https://facebook.com/{}
+LinkedIn=https://linkedin.com/in/{}
+TikTok=https://tiktok.com/@{}
+YouTube=https://youtube.com/user/{}
+Snapchat=https://snapchat.com/add/{}
+Pinterest=https://pinterest.com/{}
+Reddit=https://reddit.com/user/{}
+Discord=https://discord.com/users/{}
+Telegram=https://t.me/{}
+Twitch=https://twitch.tv/{}
+VKontakte=https://vk.com/{}
+Mastodon=https://mastodon.social/@{}
+WhatsApp=https://wa.me/{}
+Signal=https://signal.org/{}
+
+# Gaming Platforms
+Steam=https://steamcommunity.com/id/{}
+Xbox=https://account.xbox.com/en-us/profile?gamertag={}
+PlayStation=https://psnprofiles.com/{}
+Epic Games=https://fortnitetracker.com/profile/pc/{}
+Roblox=https://roblox.com/users/{}/profile
+Minecraft=https://namemc.com/profile/{}
+Battle.net=https://worldofwarcraft.com/en-us/character/us/{}/{}
+Riot Games=https://riot.com/{}
+
+# Developer Platforms
+GitHub=https://github.com/{}
+GitLab=https://gitlab.com/{}
+Bitbucket=https://bitbucket.org/{}
+Stack Overflow=https://stackoverflow.com/users/{}
+CodePen=https://codepen.io/{}
+HackerRank=https://hackerrank.com/{}
+LeetCode=https://leetcode.com/{}
+Kaggle=https://kaggle.com/{}
+Docker Hub=https://hub.docker.com/u/{}
+NPM=https://npmjs.com/~{}
+
+# Business Platforms
+AngelList=https://angel.co/{}
+Crunchbase=https://crunchbase.com/person/{}
+Upwork=https://upwork.com/freelancers/{}
+Fiverr=https://fiverr.com/{}
+Freelancer=https://freelancer.com/u/{}
+Xing=https://xing.com/profile/{}
+
+# Music Platforms
+Spotify=https://open.spotify.com/user/{}
+SoundCloud=https://soundcloud.com/{}
+Bandcamp=https://bandcamp.com/{}
+Last.fm=https://last.fm/user/{}
+Apple Music=https://music.apple.com/profile/{}
+
+# Financial Platforms
+PayPal=https://paypal.me/{}
+Venmo=https://venmo.com/{}
+CashApp=https://cash.app/${}
+Patreon=https://patreon.com/{}
+Ko-fi=https://ko-fi.com/{}
+
+# Forum Platforms
+Quora=https://quora.com/profile/{}
+Medium=https://medium.com/@{}
+DeviantArt=https://deviantart.com/{}
+Flickr=https://flickr.com/people/{}
+Tumblr=https://tumblr.com/blog/{}
+
+# Dating Platforms
+Tinder=https://tinder.com/@{}
+Bumble=https://bumble.com/{}
+OkCupid=https://okcupid.com/profile/{}
+Match=https://match.com/{}
+
+# NSFW Platforms (Uncomment if needed for extended coverage)
+# OnlyFans=https://onlyfans.com/{}
+# Pornhub=https://pornhub.com/model/{}
+# FetLife=https://fetlife.com/users/{}
+# Chaturbate=https://chaturbate.com/{}
+
+# Custom Platforms (Add your own)
+# CustomSite=https://customsite.com/users/{}
+# NewPlatform=https://newplatform.io/@{}

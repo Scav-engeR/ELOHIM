@@ -12,6 +12,8 @@ Professional-grade OSINT tool combining multiple reconnaissance capabilities for
 - Advanced multi-vector search
 
 ## Usage
+Web frontend interface https://scav-enger.github.io/ELOHIM
+or
 Open `index.html` in any modern web browser.
 
 ## License

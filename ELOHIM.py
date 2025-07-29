@@ -32,14 +32,19 @@ import ssl
 import subprocess
 from pathlib import Path
 import inspect
-import yaml  # New import for configuration
+
+# For Python 3.6 compatibility
+def run_async(coro):
+    """Compatibility function for running async code in Python 3.6"""
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(coro)
 
 # Initialize colorama for cross-platform colored output
 init(autoreset=True)
 
 class ElohimLogger:
     """Professional logging with brutal dystopic cyberpunk styling"""
-
+    
     @staticmethod
     def banner():
         banner = f"""
@@ -59,7 +64,7 @@ class ElohimLogger:
 {Fore.RED}{Style.DIM}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀{Style.RESET_ALL}
         """
         print(banner)
-
+    
     @staticmethod
     def wizard_banner():
         banner = f"""
@@ -78,32 +83,32 @@ class ElohimLogger:
 {Style.RESET_ALL}
         """
         print(banner)
-
+    
     @staticmethod
     def info(message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{Fore.WHITE}{Style.DIM}[{timestamp}] {Fore.CYAN}[◢◤ INFO]{Style.RESET_ALL} {Fore.WHITE}{message}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def success(message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{Fore.WHITE}{Style.DIM}[{timestamp}] {Fore.GREEN}[◢◤ SUCCESS]{Style.RESET_ALL} {Fore.GREEN}{message}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def warning(message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{Fore.WHITE}{Style.DIM}[{timestamp}] {Fore.YELLOW}[◢◤ WARNING]{Style.RESET_ALL} {Fore.YELLOW}{message}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def error(message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{Fore.WHITE}{Style.DIM}[{timestamp}] {Fore.RED}[◢◤ ERROR]{Style.RESET_ALL} {Fore.RED}{message}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def ghost(message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{Fore.WHITE}{Style.DIM}[{timestamp}] {Fore.MAGENTA}[◢◤ GHOST]{Style.RESET_ALL} {Fore.MAGENTA}{Style.DIM}{message}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def result(platform: str, status: str, url: str = ""):
         timestamp = datetime.now().strftime("%H:%M:%S")
@@ -116,31 +121,32 @@ class ElohimLogger:
         else:
             status_color = f"{Fore.RED}[◢◤ NOT FOUND]{Style.RESET_ALL}"
             print(f"{Fore.WHITE}{Style.DIM}[{timestamp}] {status_color} {Fore.WHITE}{Style.DIM}{platform:<25}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def plugin_loaded(plugin_name: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{Fore.WHITE}{Style.DIM}[{timestamp}] {Fore.CYAN}[◢◤ PLUGIN]{Style.RESET_ALL} {Fore.CYAN}Loaded: {plugin_name}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def wizard_input(prompt: str) -> str:
         return input(f"{Fore.MAGENTA}[◢◤ WIZARD]{Style.RESET_ALL} {Fore.WHITE}{prompt}{Style.RESET_ALL}")
-
+    
     @staticmethod
     def wizard_step(step: int, message: str):
         print(f"{Fore.MAGENTA}[◢◤ STEP {step}]{Style.RESET_ALL} {Fore.WHITE}{message}{Style.RESET_ALL}")
 
 class ConfigManager:
     """Manages ELOHIM configuration"""
-
+    
     def __init__(self, config_file="config.yaml"):
         self.config_file = Path(config_file)
         self.config = self._load_config()
-
+    
     def _load_config(self):
         """Load configuration from file or create default"""
         if self.config_file.exists():
             try:
+                import yaml
                 with open(self.config_file, 'r') as f:
                     return yaml.safe_load(f)
             except Exception as e:
@@ -148,7 +154,7 @@ class ConfigManager:
                 return self._create_default_config()
         else:
             return self._create_default_config()
-
+    
     def _create_default_config(self):
         """Create default configuration"""
         config = {
@@ -166,28 +172,30 @@ class ConfigManager:
                 'output_dir': 'reports'
             }
         }
-
+        
         # Save default config
         try:
+            import yaml
             self.config_file.parent.mkdir(exist_ok=True)
             with open(self.config_file, 'w') as f:
                 yaml.dump(config, f)
             ElohimLogger.success(f"Created default config file: {self.config_file}")
         except Exception as e:
             ElohimLogger.error(f"Failed to create config file: {str(e)}")
-
+        
         return config
-
+    
     def get(self, section, key, default=None):
         """Get configuration value"""
         try:
             return self.config[section][key]
         except KeyError:
             return default
-
+    
     def save(self):
         """Save current configuration"""
         try:
+            import yaml
             with open(self.config_file, 'w') as f:
                 yaml.dump(self.config, f)
             ElohimLogger.success("Configuration saved")
@@ -196,17 +204,17 @@ class ConfigManager:
 
 class OSINTDatabase:
     """Comprehensive OSINT platform database with file-based URL loading"""
-
+    
     @staticmethod
     def load_urls_from_file(filename: str = "Assets/Urls.txt") -> Dict[str, str]:
         """Load platform URLs from file"""
         urls = {}
         url_file = Path(filename)
-
+        
         if not url_file.exists():
             ElohimLogger.warning(f"URL file {filename} not found, creating with default URLs")
             OSINTDatabase._create_default_url_file(url_file)
-
+        
         try:
             with open(url_file, 'r') as f:
                 for line_num, line in enumerate(f, 1):
@@ -217,15 +225,15 @@ class OSINTDatabase:
                             urls[platform.strip()] = url.strip()
                         else:
                             ElohimLogger.warning(f"Invalid format at line {line_num}: {line}")
-
+            
             ElohimLogger.success(f"Loaded {len(urls)} platform URLs from {filename}")
-
+            
         except Exception as e:
             ElohimLogger.error(f"Failed to load URLs: {str(e)}")
             return OSINTDatabase._get_fallback_urls()
-
+        
         return urls
-
+    
     @staticmethod
     def _create_default_url_file(url_file: Path):
         """Create default URL file with comprehensive platform list"""
@@ -290,13 +298,13 @@ Patreon=https://patreon.com/{}
 # Pornhub=https://pornhub.com/model/{}
 # FetLife=https://fetlife.com/users/{}
 """
-
+        
         url_file.parent.mkdir(exist_ok=True)
         with open(url_file, 'w') as f:
             f.write(default_urls)
-
+        
         ElohimLogger.success(f"Created default URL file: {url_file}")
-
+    
     @staticmethod
     def _get_fallback_urls() -> Dict[str, str]:
         """Fallback URLs if file loading fails"""
@@ -307,7 +315,7 @@ Patreon=https://patreon.com/{}
             'LinkedIn': 'https://linkedin.com/in/{}',
             'Reddit': 'https://reddit.com/user/{}'
         }
-
+    
     # Legacy methods for backward compatibility
     SOCIAL_PLATFORMS = {}
     GAMING_PLATFORMS = {}
@@ -321,22 +329,22 @@ Patreon=https://patreon.com/{}
 
 class PluginManager:
     """Simplified plugin manager"""
-
+    
     def __init__(self):
         self.plugins = {}
         self.plugin_directory = Path("Assets/plugins")
         self.plugin_directory.mkdir(exist_ok=True, parents=True)
         ElohimLogger.ghost("Plugin system initialized")
-
+    
     def load_plugins(self):
         """Load plugins from Assets directory"""
         ElohimLogger.info("Loading available plugins...")
-
+        
         # Create simple built-in plugins
         self.plugins['url_scanner'] = self._create_url_scanner()
         self.plugins['email_hunter'] = self._create_email_hunter()
         self.plugins['dark_web'] = self._create_dark_web_scanner()
-
+        
         # Load external plugins from the plugins directory
         for file_path in self.plugin_directory.glob("*.py"):
             try:
@@ -345,7 +353,7 @@ class PluginManager:
                 if spec and spec.loader:
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
-
+                    
                     # Look for a class that has an execute method
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
@@ -356,9 +364,9 @@ class PluginManager:
                             break
             except Exception as e:
                 ElohimLogger.error(f"Failed to load plugin {file_path.name}: {str(e)}")
-
+        
         ElohimLogger.success(f"Loaded {len(self.plugins)} plugin(s)")
-
+    
     def _create_url_scanner(self):
         """Simple URL scanner plugin"""
         def execute(target, **kwargs):
@@ -367,7 +375,7 @@ class PluginManager:
             for url in discovered:
                 ElohimLogger.result("URL Scanner", "FOUND", url)
             return {'url_scanner': {'discovered': discovered}}
-
+        
         plugin = type('URLScanner', (), {
             'execute': execute,
             'description': 'Platform URL discovery',
@@ -375,7 +383,7 @@ class PluginManager:
         })()
         ElohimLogger.plugin_loaded("builtin:url_scanner")
         return plugin
-
+    
     def _create_email_hunter(self):
         """Simple email hunter plugin"""
         def execute(target, **kwargs):
@@ -385,7 +393,7 @@ class PluginManager:
             for email in emails:
                 ElohimLogger.result("Email Hunter", "FOUND", email)
             return {'email_hunter': {'found': emails}}
-
+        
         plugin = type('EmailHunter', (), {
             'execute': execute,
             'description': 'Email address discovery',
@@ -393,7 +401,7 @@ class PluginManager:
         })()
         ElohimLogger.plugin_loaded("builtin:email_hunter")
         return plugin
-
+    
     def _create_dark_web_scanner(self):
         """Simple dark web scanner"""
         def execute(target, **kwargs):
@@ -404,7 +412,7 @@ class PluginManager:
             else:
                 ElohimLogger.success("No dark web presence detected")
             return {'dark_web': {'mentions': mentions}}
-
+        
         plugin = type('DarkWebScanner', (), {
             'execute': execute,
             'description': 'Dark web presence detection',
@@ -412,13 +420,13 @@ class PluginManager:
         })()
         ElohimLogger.plugin_loaded("builtin:dark_web")
         return plugin
-
+    
     def execute_plugin(self, plugin_name: str, target: str, **kwargs) -> Dict[str, Any]:
         """Execute plugin"""
         if plugin_name not in self.plugins:
             ElohimLogger.error(f"Plugin '{plugin_name}' not found")
             return {}
-
+        
         try:
             ElohimLogger.info(f"Executing plugin: {plugin_name}")
             result = self.plugins[plugin_name].execute(target, **kwargs)
@@ -427,14 +435,14 @@ class PluginManager:
         except Exception as e:
             ElohimLogger.error(f"Plugin '{plugin_name}' failed: {str(e)}")
             return {}
-
+    
     def list_plugins(self) -> List[str]:
         return list(self.plugins.keys())
-
+    
     def get_plugin_info(self, plugin_name: str) -> Dict[str, str]:
         if plugin_name not in self.plugins:
             return {}
-
+        
         plugin = self.plugins[plugin_name]
         return {
             'name': plugin_name,
@@ -444,7 +452,7 @@ class PluginManager:
 
 class UsernameSearcher:
     """Enhanced username enumeration with robust error handling"""
-
+    
     def __init__(self, max_workers: int = 20, simulation_mode: bool = True):
         self.max_workers = max_workers
         self.simulation_mode = simulation_mode
@@ -452,10 +460,10 @@ class UsernameSearcher:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
-
+    
     async def check_username_async(self, session: aiohttp.ClientSession, platform: str, url: str, username: str) -> Dict[str, Any]:
         """Asynchronously check username with robust error handling"""
-
+        
         # Simulation mode for demos/testing
         if self.simulation_mode:
             await asyncio.sleep(random.uniform(0.1, 0.5))  # Simulate network delay
@@ -463,7 +471,7 @@ class UsernameSearcher:
             status = "FOUND" if found else "NOT FOUND"
             formatted_url = url.format(username) if found else ""
             return {'platform': platform, 'status': status, 'url': formatted_url}
-
+        
         # Real scanning mode
         try:
             formatted_url = url.format(username)
@@ -482,7 +490,7 @@ class UsernameSearcher:
             return {'platform': platform, 'status': 'CONNECTION_ERROR', 'url': '', 'error': str(e)}
         except Exception as e:
             return {'platform': platform, 'status': 'ERROR', 'url': '', 'error': str(e)}
-
+    
     def _validate_profile_content(self, platform: str, content: str, username: str) -> bool:
         """Validate if profile actually exists based on content analysis"""
         validation_rules = {
@@ -492,25 +500,25 @@ class UsernameSearcher:
             'LinkedIn': lambda c: 'profile' in c.lower() and 'member' in c.lower(),
             'Reddit': lambda c: 'user/' in c and 'overview' in c
         }
-
+        
         if platform in validation_rules:
             return validation_rules[platform](content)
-
+        
         negative_indicators = [
             'not found', 'page not found', '404', 'user not found',
             'profile not found', 'account not found', 'suspended'
         ]
-
+        
         return not any(indicator in content.lower() for indicator in negative_indicators)
-
+    
     async def search_username(self, username: str, platforms: Dict[str, str]) -> List[Dict[str, Any]]:
         """Search username across multiple platforms with improved connection handling"""
         ElohimLogger.info(f"Initiating username reconnaissance for: {username}")
         ElohimLogger.info(f"Scanning {len(platforms)} platforms...")
-
+        
         if self.simulation_mode:
             ElohimLogger.warning("Running in simulation mode for demonstration")
-
+        
         # More conservative connection settings
         connector = aiohttp.TCPConnector(
             limit=20,  # Reduced from 100
@@ -519,32 +527,32 @@ class UsernameSearcher:
             ttl_dns_cache=300,
             use_dns_cache=True
         )
-
+        
         timeout = aiohttp.ClientTimeout(total=15, connect=5)
-
+        
         try:
             async with aiohttp.ClientSession(
-                connector=connector,
+                connector=connector, 
                 timeout=timeout,
                 headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             ) as session:
-
+                
                 # Process platforms in smaller batches to avoid overwhelming connections
                 batch_size = 10
                 platform_items = list(platforms.items())
                 all_results = []
-
+                
                 for i in range(0, len(platform_items), batch_size):
                     batch = platform_items[i:i+batch_size]
                     ElohimLogger.info(f"Processing batch {i//batch_size + 1}/{(len(platform_items) + batch_size - 1)//batch_size}")
-
+                    
                     tasks = []
                     for platform, url_template in batch:
                         task = self.check_username_async(session, platform, url_template, username)
                         tasks.append(task)
-
+                    
                     batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-
+                    
                     for result in batch_results:
                         if isinstance(result, dict):
                             all_results.append(result)
@@ -555,25 +563,25 @@ class UsernameSearcher:
                                 ElohimLogger.result(result['platform'], 'NSFW', result.get('url', ''))
                             elif status in ['TIMEOUT', 'CONNECTION_ERROR']:
                                 ElohimLogger.warning(f"{result['platform']}: {status}")
-
+                    
                     # Small delay between batches
                     await asyncio.sleep(0.5)
-
+                
         except Exception as e:
             ElohimLogger.error(f"Session error: {str(e)}")
             return []
-
+        
         found_count = len([r for r in all_results if r.get('status') == 'FOUND'])
         ElohimLogger.success(f"Scan completed. Found {found_count} profiles across {len(platforms)} platforms")
-
+        
         return all_results
 
 class DomainAnalyzer:
     """Comprehensive domain and infrastructure analysis"""
-
+    
     def __init__(self):
         self.session = requests.Session()
-
+    
     def whois_lookup(self, domain: str) -> Dict[str, Any]:
         """Perform WHOIS lookup"""
         try:
@@ -590,13 +598,13 @@ class DomainAnalyzer:
         except Exception as e:
             ElohimLogger.error(f"WHOIS lookup failed: {str(e)}")
             return {'error': str(e)}
-
+    
     def dns_enumeration(self, domain: str) -> Dict[str, List[str]]:
         """Enumerate DNS records"""
         ElohimLogger.info(f"Enumerating DNS records for {domain}")
         records = {}
         record_types = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CNAME', 'SOA']
-
+        
         for record_type in record_types:
             try:
                 answers = dns.resolver.resolve(domain, record_type)
@@ -604,13 +612,13 @@ class DomainAnalyzer:
                 ElohimLogger.success(f"Found {len(records[record_type])} {record_type} records")
             except:
                 records[record_type] = []
-
+        
         return records
-
+    
     def subdomain_enumeration(self, domain: str, deep_scan: bool = False) -> List[str]:
         """Discover subdomains using wordlist"""
         ElohimLogger.info(f"Discovering subdomains for {domain}")
-
+        
         # Common subdomain wordlist
         subdomains = [
             'www', 'mail', 'ftp', 'localhost', 'webmail', 'smtp', 'pop', 'ns1', 'webdisk',
@@ -619,7 +627,7 @@ class DomainAnalyzer:
             'cdn', 'static', 'assets', 'media', 'images', 'img', 'docs', 'support',
             'portal', 'dashboard', 'app', 'apps', 'beta', 'alpha', 'demo', 'preview'
         ]
-
+        
         # Add expanded wordlist for deep scan
         if deep_scan:
             additional_subdomains = [
@@ -633,9 +641,9 @@ class DomainAnalyzer:
             ]
             subdomains.extend(additional_subdomains)
             ElohimLogger.info(f"Deep scan enabled - using expanded wordlist ({len(subdomains)} potential subdomains)")
-
+        
         found_subdomains = []
-
+        
         def check_subdomain(sub):
             try:
                 full_domain = f"{sub}.{domain}"
@@ -644,14 +652,14 @@ class DomainAnalyzer:
                 ElohimLogger.success(f"Found subdomain: {full_domain}")
             except:
                 pass
-
+        
         # Use more workers for deep scan
         max_workers = 75 if deep_scan else 50
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             executor.map(check_subdomain, subdomains)
-
+        
         return found_subdomains
-
+    
     def ssl_analysis(self, domain: str) -> Dict[str, Any]:
         """Analyze SSL certificate"""
         ElohimLogger.info(f"Analyzing SSL certificate for {domain}")
@@ -660,7 +668,7 @@ class DomainAnalyzer:
             with socket.create_connection((domain, 443), timeout=10) as sock:
                 with context.wrap_socket(sock, server_hostname=domain) as ssock:
                     cert = ssock.getpeercert()
-
+                    
                     return {
                         'subject': dict(x[0] for x in cert['subject']),
                         'issuer': dict(x[0] for x in cert['issuer']),
@@ -673,16 +681,16 @@ class DomainAnalyzer:
         except Exception as e:
             ElohimLogger.error(f"SSL analysis failed: {str(e)}")
             return {'error': str(e)}
-
+    
     def port_scan(self, domain: str, ports: List[int] = None) -> Dict[int, str]:
         """Scan common ports"""
         if ports is None:
             ports = [21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445, 993, 995, 1723, 3306, 3389, 5900, 8080]
-
+        
         ElohimLogger.info(f"Scanning {len(ports)} common ports for {domain}")
-
+        
         open_ports = {}
-
+        
         def scan_port(port):
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -695,16 +703,16 @@ class DomainAnalyzer:
                 s.close()
             except:
                 pass
-
+        
         with ThreadPoolExecutor(max_workers=10) as executor:
             executor.map(scan_port, ports)
-
+        
         return open_ports
-
+    
     def technology_detection(self, domain: str) -> Dict[str, List[str]]:
         """Detect technologies used by the website"""
         ElohimLogger.info(f"Detecting technologies for {domain}")
-
+        
         technologies = {
             'frameworks': [],
             'cms': [],
@@ -713,17 +721,17 @@ class DomainAnalyzer:
             'server': [],
             'other': []
         }
-
+        
         try:
             url = f"https://{domain}"
             response = self.session.get(url, timeout=10)
             html = response.text.lower()
             headers = response.headers
-
+            
             # Check for server info in headers
             if 'server' in headers:
                 technologies['server'].append(headers['server'])
-
+            
             # Simple technology detection based on keywords
             if 'wordpress' in html:
                 technologies['cms'].append('WordPress')
@@ -731,7 +739,7 @@ class DomainAnalyzer:
                 technologies['cms'].append('Drupal')
             if 'joomla' in html:
                 technologies['cms'].append('Joomla')
-
+            
             if 'bootstrap' in html:
                 technologies['frameworks'].append('Bootstrap')
             if 'jquery' in html:
@@ -742,28 +750,28 @@ class DomainAnalyzer:
                 technologies['frameworks'].append('Angular')
             if 'vue' in html:
                 technologies['frameworks'].append('Vue.js')
-
+                
             if 'google-analytics' in html or 'ga.js' in html:
                 technologies['analytics'].append('Google Analytics')
             if 'facebook-pixel' in html:
                 technologies['analytics'].append('Facebook Pixel')
-
+                
             ElohimLogger.success(f"Detected {sum(len(v) for v in technologies.values())} technologies")
-
+            
         except Exception as e:
             ElohimLogger.error(f"Technology detection failed: {str(e)}")
-
+        
         return technologies
-
+    
     def wayback_analysis(self, domain: str) -> Dict[str, Any]:
         """Analyze historical domain data using Wayback Machine API"""
         ElohimLogger.info(f"Analyzing historical data for {domain}")
-
+        
         try:
             url = f"https://archive.org/wayback/available?url={domain}"
             response = requests.get(url, timeout=10)
             data = response.json()
-
+            
             if 'archived_snapshots' in data and 'closest' in data['archived_snapshots']:
                 snapshot = data['archived_snapshots']['closest']
                 return {
@@ -775,25 +783,25 @@ class DomainAnalyzer:
             else:
                 ElohimLogger.warning(f"No Wayback Machine data found for {domain}")
                 return {'available': False}
-
+                
         except Exception as e:
             ElohimLogger.error(f"Wayback analysis failed: {str(e)}")
             return {'error': str(e)}
 
 class EmailInvestigator:
     """Email address investigation and analysis"""
-
+    
     def __init__(self):
         self.session = requests.Session()
-
+    
     def analyze_email(self, email: str, deep_scan: bool = False) -> Dict[str, Any]:
         """Comprehensive email analysis"""
         ElohimLogger.info(f"Investigating email: {email}")
-
+        
         domain = email.split('@')[1] if '@' in email else None
         if not domain:
             return {'error': 'Invalid email format'}
-
+        
         results = {
             'email': email,
             'domain': domain,
@@ -801,52 +809,52 @@ class EmailInvestigator:
             'breach_check': self.check_breaches(email),
             'account_enumeration': self.enumerate_accounts(email)
         }
-
+        
         # Analyze domain
         domain_analyzer = DomainAnalyzer()
         results['domain_analysis'] = {
             'whois': domain_analyzer.whois_lookup(domain),
             'dns': domain_analyzer.dns_enumeration(domain)
         }
-
+        
         # Additional analysis for deep scan
         if deep_scan:
-            ElohimLogger.info("Performing deep scan analysis...")
+            ElohimLogger.info("Performing deep scan email analysis...")
             results['email_pattern_analysis'] = self.analyze_email_pattern(email)
             results['similar_emails'] = self.find_similar_emails(email)
             results['social_media_lookup'] = self.lookup_social_media(email)
-
+        
         return results
-
+    
     def check_breaches(self, email: str) -> Dict[str, Any]:
         """Check for data breaches (simulated)"""
         ElohimLogger.info(f"Checking breach databases for {email}")
-
+        
         # Simulated breach check results
         common_breaches = [
             'LinkedIn 2012', 'Adobe 2013', 'Yahoo 2014', 'Equifax 2017',
             'Facebook 2019', 'Twitter 2020', 'Microsoft 2021'
         ]
-
+        
         # Simulate random breach results
         found_breaches = random.sample(common_breaches, random.randint(0, 3))
-
+        
         if found_breaches:
             ElohimLogger.warning(f"Found in {len(found_breaches)} breach(es)")
             for breach in found_breaches:
                 ElohimLogger.result("Breach Database", "FOUND", breach)
         else:
             ElohimLogger.success("No breaches found")
-
+        
         return {
             'breaches_found': len(found_breaches),
             'breach_list': found_breaches
         }
-
+    
     def enumerate_accounts(self, email: str) -> List[str]:
         """Enumerate associated accounts"""
         ElohimLogger.info("Enumerating associated accounts")
-
+        
         # Platform-specific account enumeration
         platforms = {
             'Adobe': f'https://accounts.adobe.com/verify?email={email}',
@@ -854,7 +862,7 @@ class EmailInvestigator:
             'Microsoft': f'https://account.live.com/ResetPassword.aspx',
             'Google': f'https://accounts.google.com/signin/recovery'
         }
-
+        
         found_accounts = []
         for platform, url in platforms.items():
             # Simulated account detection
@@ -863,37 +871,37 @@ class EmailInvestigator:
                 ElohimLogger.result(platform, "FOUND", "Account exists")
             else:
                 ElohimLogger.result(platform, "NOT FOUND")
-
+        
         return found_accounts
-
+    
     def analyze_email_pattern(self, email: str) -> Dict[str, Any]:
         """Analyze email pattern for additional intelligence"""
         username, domain = email.split('@')
-
+        
         patterns = []
         if '.' in username:
             patterns.append('first.last')
         elif '_' in username:
             patterns.append('first_last')
-
+        
         if any(c.isdigit() for c in username):
             patterns.append('contains_digits')
-
+            
         ElohimLogger.info(f"Email pattern analysis: {', '.join(patterns) if patterns else 'No specific pattern'}")
-
+        
         return {
             'username': username,
             'patterns': patterns,
             'potential_formats': ['first.last@domain', 'first_last@domain', 'firstlast@domain']
         }
-
+    
     def find_similar_emails(self, email: str) -> List[str]:
         """Find similar email patterns (for deep scan)"""
         username, domain = email.split('@')
-
+        
         # Generate variations based on common patterns
         similar_emails = []
-
+        
         # Handle first.last pattern
         if '.' in username:
             parts = username.split('.')
@@ -902,45 +910,45 @@ class EmailInvestigator:
                 similar_emails.append(f"{first}{last}@{domain}")
                 similar_emails.append(f"{first[0]}{last}@{domain}")
                 similar_emails.append(f"{first}_{last}@{domain}")
-
+        
         # Handle firstlast pattern
         elif len(username) > 2 and not any(c in username for c in ['.', '_', '-']):
             # Try to find common name boundaries
             similar_emails.append(f"{username[0]}.{username[1:]}@{domain}")
             similar_emails.append(f"{username[0]}_{username[1:]}@{domain}")
-
+        
         ElohimLogger.info(f"Found {len(similar_emails)} similar email patterns")
         return similar_emails
-
+    
     def lookup_social_media(self, email: str) -> Dict[str, bool]:
         """Check if email is associated with social media accounts (for deep scan)"""
         ElohimLogger.info("Checking social media associations")
-
+        
         platforms = ['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'GitHub']
         results = {}
-
+        
         for platform in platforms:
             # Simulate random results
             exists = random.choice([True, False])
             results[platform] = exists
-
+            
             if exists:
                 ElohimLogger.result(platform, "FOUND", f"Email associated with account")
             else:
                 ElohimLogger.result(platform, "NOT FOUND")
-
+        
         return results
 
 class PhoneInvestigator:
     """Phone number OSINT and analysis"""
-
+    
     def analyze_phone(self, phone: str, deep_scan: bool = False) -> Dict[str, Any]:
         """Comprehensive phone number analysis"""
         ElohimLogger.info(f"Analyzing phone number: {phone}")
-
+        
         # Clean phone number
         cleaned_phone = re.sub(r'[^\d+]', '', phone)
-
+        
         results = {
             'phone': phone,
             'cleaned': cleaned_phone,
@@ -949,83 +957,83 @@ class PhoneInvestigator:
             'social_links': self.find_social_links(cleaned_phone),
             'spam_check': self.check_spam_database(cleaned_phone)
         }
-
+        
         # Additional analysis for deep scan
         if deep_scan:
             ElohimLogger.info("Performing deep scan phone analysis...")
             results['reverse_lookup'] = self.reverse_lookup(cleaned_phone)
             results['associated_names'] = self.find_associated_names(cleaned_phone)
             results['historical_data'] = self.get_historical_data(cleaned_phone)
-
+        
         return results
-
+    
     def identify_carrier(self, phone: str) -> Dict[str, str]:
         """Identify phone carrier"""
         ElohimLogger.info("Identifying carrier information")
-
+        
         # Simulated carrier data
         carriers = ['Verizon', 'AT&T', 'T-Mobile', 'Sprint', 'US Cellular']
         carrier = random.choice(carriers)
-
+        
         ElohimLogger.success(f"Carrier identified: {carrier}")
-
+        
         return {
             'carrier': carrier,
             'type': random.choice(['Mobile', 'Landline', 'VoIP']),
             'region': random.choice(['US-East', 'US-West', 'US-Central'])
         }
-
+    
     def get_location_info(self, phone: str) -> Dict[str, str]:
         """Get location information"""
         ElohimLogger.info("Analyzing location data")
-
+        
         locations = {
             'city': random.choice(['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix']),
             'state': random.choice(['NY', 'CA', 'IL', 'TX', 'AZ']),
             'timezone': random.choice(['EST', 'PST', 'CST', 'MST'])
         }
-
+        
         ElohimLogger.success(f"Location: {locations['city']}, {locations['state']}")
-
+        
         return locations
-
+    
     def find_social_links(self, phone: str) -> List[str]:
         """Find social media profiles linked to phone"""
         ElohimLogger.info("Searching for linked social media accounts")
-
+        
         platforms = ['WhatsApp', 'Telegram', 'Signal', 'Viber']
         found = random.sample(platforms, random.randint(0, 2))
-
+        
         for platform in found:
             ElohimLogger.result(platform, "FOUND", "Profile linked")
-
+        
         return found
-
+    
     def check_spam_database(self, phone: str) -> Dict[str, Any]:
         """Check spam/scam databases"""
         ElohimLogger.info("Checking spam/scam databases")
-
+        
         is_spam = random.choice([True, False])
         spam_score = random.randint(0, 100) if is_spam else random.randint(0, 30)
-
+        
         if is_spam:
             ElohimLogger.warning(f"Spam score: {spam_score}/100")
         else:
             ElohimLogger.success(f"Clean number - Spam score: {spam_score}/100")
-
+        
         return {
             'is_spam': is_spam,
             'spam_score': spam_score,
             'reports': random.randint(0, 50) if is_spam else 0
         }
-
+    
     def reverse_lookup(self, phone: str) -> Dict[str, Any]:
         """Perform reverse phone lookup (for deep scan)"""
         ElohimLogger.info("Performing reverse phone lookup")
-
+        
         # Simulate lookup results
         found = random.choice([True, False])
-
+        
         if found:
             result = {
                 'name': random.choice(['John Smith', 'Jane Doe', 'Alex Johnson']),
@@ -1037,32 +1045,32 @@ class PhoneInvestigator:
         else:
             result = {'found': False}
             ElohimLogger.warning("No owner information found")
-
+        
         return result
-
+    
     def find_associated_names(self, phone: str) -> List[str]:
         """Find names associated with the phone number (for deep scan)"""
         ElohimLogger.info("Searching for associated names")
-
+        
         # Simulate associated names
         count = random.randint(0, 3)
         names = []
-
+        
         for _ in range(count):
             name = random.choice(['John Smith', 'Jane Doe', 'Alex Johnson', 'Sarah Williams'])
             if name not in names:  # Avoid duplicates
                 names.append(name)
                 ElohimLogger.result("Associated Name", "FOUND", name)
-
+        
         if not names:
             ElohimLogger.warning("No associated names found")
-
+            
         return names
-
+    
     def get_historical_data(self, phone: str) -> Dict[str, Any]:
         """Get historical data for the phone number (for deep scan)"""
         ElohimLogger.info("Retrieving historical data")
-
+        
         # Simulate historical data
         history = {
             'first_seen': f"20{random.randint(10, 20)}-{random.randint(1, 12)}-{random.randint(1, 28)}",
@@ -1070,21 +1078,21 @@ class PhoneInvestigator:
             'previous_owners': random.randint(0, 2),
             'status_changes': random.randint(0, 3)
         }
-
+        
         ElohimLogger.success(f"First seen: {history['first_seen']}, Last seen: {history['last_seen']}")
-
+        
         return history
 
 class ReportGenerator:
     """Generate comprehensive OSINT reports"""
-
+    
     @staticmethod
     def generate_report(target: str, results: Dict[str, Any], output_format: str = 'json') -> str:
         """Generate comprehensive report"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_dir = Path("reports")
         report_dir.mkdir(exist_ok=True)
-
+        
         report = {
             'target': target,
             'timestamp': timestamp,
@@ -1092,7 +1100,7 @@ class ReportGenerator:
             'results': results,
             'summary': ReportGenerator._generate_summary(results)
         }
-
+        
         if output_format == 'json':
             filename = report_dir / f"elohim_report_{target}_{timestamp}.json"
             with open(filename, 'w') as f:
@@ -1111,22 +1119,22 @@ class ReportGenerator:
                 f.write(f"\nRecommendations:\n")
                 for rec in summary['recommendations']:
                     f.write(f"  - {rec}\n")
-
+                
                 f.write(f"\nDetailed Results:\n")
                 # Flatten and simplify results for text output
                 ReportGenerator._write_txt_results(f, results, 0)
         else:
             ElohimLogger.error(f"Unsupported output format: {output_format}")
             return ""
-
+        
         ElohimLogger.success(f"Report generated: {filename}")
         return str(filename)
-
+    
     @staticmethod
     def _write_txt_results(file, data, indent_level: int):
         """Helper method to write nested results to text file"""
         indent = "  " * indent_level
-
+        
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, (dict, list)):
@@ -1141,7 +1149,7 @@ class ReportGenerator:
                     ReportGenerator._write_txt_results(file, item, indent_level + 1)
                 else:
                     file.write(f"{indent}- {item}\n")
-
+    
     @staticmethod
     def _generate_summary(results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate executive summary"""
@@ -1151,58 +1159,58 @@ class ReportGenerator:
             'risk_level': 'LOW',
             'recommendations': []
         }
-
+        
         # Analyze results and generate summary
         if 'username_search' in results:
             username_results = results['username_search']
             summary['total_platforms_checked'] = len(username_results)
             summary['profiles_found'] = len([r for r in username_results if r.get('status') == 'FOUND'])
-
+            
             # Generate recommendations
             if summary['profiles_found'] > 10:
                 summary['recommendations'].append("Consider reducing your online footprint")
                 summary['recommendations'].append("Review privacy settings on all identified platforms")
             elif summary['profiles_found'] > 5:
                 summary['recommendations'].append("Review privacy settings on key platforms")
-
+        
         # Risk assessment
         if summary['profiles_found'] > 10:
             summary['risk_level'] = 'HIGH'
         elif summary['profiles_found'] > 5:
             summary['risk_level'] = 'MEDIUM'
-
+            
         # Add domain-specific recommendations
         if 'domain_analysis' in results:
             summary['recommendations'].append("Ensure domain records are properly configured")
             if 'subdomains' in results['domain_analysis'] and results['domain_analysis']['subdomains']:
                 summary['recommendations'].append(f"Review security of {len(results['domain_analysis']['subdomains'])} discovered subdomains")
-
+                
         # Add email-specific recommendations
         if 'email_investigation' in results:
             if results['email_investigation'].get('breach_check', {}).get('breaches_found', 0) > 0:
                 summary['recommendations'].append("Change passwords on all accounts")
                 summary['risk_level'] = 'HIGH'
-
+        
         return summary
 
 class WizardMode:
     """Interactive wizard mode for guided reconnaissance"""
-
+    
     def __init__(self, elohim_core):
         self.elohim = elohim_core
-
+    
     async def run(self):
         """Run the interactive wizard"""
         ElohimLogger.wizard_banner()
         ElohimLogger.wizard_step(1, "Select target type")
         print(f"{Fore.CYAN}1. Username\n2. Email\n3. Domain\n4. Phone Number\n5. Comprehensive Scan{Style.RESET_ALL}")
-
+        
         target_type = ElohimLogger.wizard_input("Enter your choice (1-5): ")
         target = ElohimLogger.wizard_input("Enter target: ")
-
+        
         include_nsfw = ElohimLogger.wizard_input("Include NSFW results? (y/n): ").lower() == 'y'
         deep_scan = ElohimLogger.wizard_input("Enable deep scanning? (y/n): ").lower() == 'y'
-
+        
         # Execute appropriate scan based on selection
         results = {}
         if target_type == "1":
@@ -1213,36 +1221,36 @@ class WizardMode:
                 custom_platforms = ElohimLogger.wizard_input("Enter platform types (comma-separated): ")
                 if custom_platforms:
                     platform_types = custom_platforms.split(',')
-
+            
             results = await self.elohim.run_username_search(target, platform_types, include_nsfw)
-
+            
         elif target_type == "2":
             ElohimLogger.wizard_step(2, f"Investigating email: {target}")
             results = self.elohim.run_email_investigation(target, deep_scan)
-
+            
         elif target_type == "3":
             ElohimLogger.wizard_step(2, f"Analyzing domain: {target}")
             results = self.elohim.run_domain_analysis(target, deep_scan)
-
+            
         elif target_type == "4":
             ElohimLogger.wizard_step(2, f"Investigating phone number: {target}")
             results = self.elohim.run_phone_investigation(target, deep_scan)
-
+            
         elif target_type == "5":
             ElohimLogger.wizard_step(2, f"Running comprehensive scan on: {target}")
             results = await self.elohim.run_comprehensive_scan(target, include_nsfw, deep_scan)
-
+        
         # Execute additional plugins
         ElohimLogger.wizard_step(3, "Select plugins to execute")
         plugins = self.elohim.plugin_manager.list_plugins()
-
+        
         print(f"{Fore.CYAN}Available plugins:{Style.RESET_ALL}")
         for i, plugin in enumerate(plugins, 1):
             plugin_info = self.elohim.plugin_manager.get_plugin_info(plugin)
             print(f"{Fore.CYAN}{i}. {plugin}{Style.RESET_ALL} - {plugin_info.get('description', 'No description')}")
-
+        
         selected_plugins = ElohimLogger.wizard_input("Enter plugin numbers (comma-separated) or 'all': ")
-
+        
         plugin_results = {}
         if selected_plugins.lower() == 'all':
             for plugin in plugins:
@@ -1255,32 +1263,32 @@ class WizardMode:
                     plugin = plugins[idx]
                     plugin_result = self.elohim.plugin_manager.execute_plugin(plugin, target)
                     plugin_results.update(plugin_result)
-
+        
         results.update(plugin_results)
-
+        
         # Ask about saving report
         ElohimLogger.wizard_step(4, "Generate report")
         save_report = ElohimLogger.wizard_input("Save results to report? (y/n): ").lower() == 'y'
-
+        
         if save_report:
             report_format = ElohimLogger.wizard_input("Report format (json/txt): ").lower()
             if report_format not in ['json', 'txt']:
                 report_format = 'json'
-
+                
             report_file = self.elohim.report_generator.generate_report(target, results, report_format)
             ElohimLogger.success(f"Report saved to: {report_file}")
-
+        
         ElohimLogger.success("Wizard scan completed")
 
 class ElohimCore:
     """Main ELOHIM framework controller with plugin support"""
-
+    
     def __init__(self):
         self.config = ConfigManager()
-
+        
         simulation_mode = self.config.get('general', 'simulation_mode', True)
         max_workers = self.config.get('general', 'max_workers', 20)
-
+        
         self.username_searcher = UsernameSearcher(max_workers=max_workers, simulation_mode=simulation_mode)
         self.domain_analyzer = DomainAnalyzer()
         self.email_investigator = EmailInvestigator()
@@ -1288,13 +1296,13 @@ class ElohimCore:
         self.report_generator = ReportGenerator()
         self.plugin_manager = PluginManager()
         self.plugin_manager.load_plugins()
-
+    
     async def run_username_search(self, username: str, platform_types: List[str], include_nsfw: bool = False) -> Dict[str, Any]:
         """Execute enhanced username search with file-based URL loading"""
-
+        
         # Load all URLs from file
         all_platforms = OSINTDatabase.load_urls_from_file()
-
+        
         # Filter platforms based on types (optional - use all if no filtering needed)
         if platform_types and platform_types != ['all']:
             # For now, use all platforms since file doesn't have categories
@@ -1302,52 +1310,52 @@ class ElohimCore:
             platforms = all_platforms
         else:
             platforms = all_platforms
-
+        
         # Filter NSFW if not requested
         if not include_nsfw:
             nsfw_keywords = ['onlyfans', 'pornhub', 'fetlife', 'adult', 'xxx', 'cam', 'sex']
-            platforms = {k: v for k, v in platforms.items()
+            platforms = {k: v for k, v in platforms.items() 
                         if not any(keyword in k.lower() or keyword in v.lower() for keyword in nsfw_keywords)}
-
+        
         results = await self.username_searcher.search_username(username, platforms)
         return {'username_search': results}
-
+    
     def run_domain_analysis(self, domain: str, deep_scan: bool = False) -> Dict[str, Any]:
         """Execute domain analysis"""
         ElohimLogger.info(f"Starting {'deep' if deep_scan else 'standard'} domain analysis for: {domain}")
-
+        
         results = {
             'whois': self.domain_analyzer.whois_lookup(domain),
             'dns': self.domain_analyzer.dns_enumeration(domain),
             'subdomains': self.domain_analyzer.subdomain_enumeration(domain, deep_scan),
             'ssl': self.domain_analyzer.ssl_analysis(domain)
         }
-
+        
         # Additional analysis for deep scan
         if deep_scan:
             ElohimLogger.info("Performing deep domain analysis...")
             results['port_scan'] = self.domain_analyzer.port_scan(domain)
             results['technologies'] = self.domain_analyzer.technology_detection(domain)
             results['wayback_analysis'] = self.domain_analyzer.wayback_analysis(domain)
-
+        
         return {'domain_analysis': results}
-
+    
     def run_email_investigation(self, email: str, deep_scan: bool = False) -> Dict[str, Any]:
         """Execute email investigation"""
         results = self.email_investigator.analyze_email(email, deep_scan)
         return {'email_investigation': results}
-
+    
     def run_phone_investigation(self, phone: str, deep_scan: bool = False) -> Dict[str, Any]:
         """Execute phone investigation"""
         results = self.phone_investigator.analyze_phone(phone, deep_scan)
         return {'phone_investigation': results}
-
+    
     async def run_comprehensive_scan(self, target: str, include_nsfw: bool = False, deep_scan: bool = False) -> Dict[str, Any]:
         """Execute comprehensive multi-vector scan"""
         ElohimLogger.info(f"Initiating comprehensive {'deep' if deep_scan else 'standard'} scan for: {target}")
-
+        
         all_results = {}
-
+        
         # Determine target type and run appropriate scans
         if '@' in target:  # Email
             all_results.update(self.run_email_investigation(target, deep_scan))
@@ -1355,18 +1363,18 @@ class ElohimCore:
             all_results.update(await self.run_username_search(
                 username, ['social', 'dev', 'business'], include_nsfw
             ))
-
+            
         elif target.replace('+', '').replace('-', '').replace(' ', '').isdigit():  # Phone
             all_results.update(self.run_phone_investigation(target, deep_scan))
-
+            
         elif '.' in target and not ' ' in target:  # Domain
             all_results.update(self.run_domain_analysis(target, deep_scan))
-
+            
         else:  # Username
             all_results.update(await self.run_username_search(
                 target, ['social', 'gaming', 'dev', 'business', 'dating', 'forum'], include_nsfw
             ))
-
+        
         return all_results
 
 def main():
@@ -1385,78 +1393,79 @@ def main():
   {Fore.CYAN}python3 elohim.py list-plugins{Style.RESET_ALL}               # List available plugins
         """
     )
-
+    
     # Add wizard mode flag
-    parser.add_argument('--wizard', action='store_true',
+    parser.add_argument('--wizard', action='store_true', 
                        help='Launch interactive wizard mode for guided reconnaissance')
-
+    
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
-
+    
     # Username search
     username_parser = subparsers.add_parser('username', help='Username reconnaissance')
     username_parser.add_argument('-t', '--target', required=True, help='Username to investigate')
-    username_parser.add_argument('--platforms', nargs='+',
+    username_parser.add_argument('--platforms', nargs='+', 
                                choices=['social', 'gaming', 'dev', 'business', 'dating', 'forum', 'financial', 'music', 'all'],
                                default=['social', 'dev'], help='Platform types to search')
-    username_parser.add_argument('--nsfw', action='store_true',
+    username_parser.add_argument('--nsfw', action='store_true', 
                                help='Include NSFW platforms (extended coverage)')
-
+    
     # Email investigation
     email_parser = subparsers.add_parser('email', help='Email investigation')
     email_parser.add_argument('-t', '--target', required=True, help='Email to investigate')
     email_parser.add_argument('--deep-scan', action='store_true',
                             help='Enable deep scanning mode')
-
+    
     # Domain analysis
     domain_parser = subparsers.add_parser('domain', help='Domain analysis')
     domain_parser.add_argument('-t', '--target', required=True, help='Domain to analyze')
     domain_parser.add_argument('--deep-scan', action='store_true',
                              help='Enable deep scanning mode')
-
+    
     # Phone investigation
     phone_parser = subparsers.add_parser('phone', help='Phone number investigation')
     phone_parser.add_argument('-t', '--target', required=True, help='Phone number to investigate')
     phone_parser.add_argument('--deep-scan', action='store_true',
                             help='Enable deep scanning mode')
-
+    
     # Comprehensive scan
     comp_parser = subparsers.add_parser('comprehensive', help='Comprehensive multi-vector scan')
     comp_parser.add_argument('-t', '--target', required=True, help='Target to investigate')
-    comp_parser.add_argument('--nsfw', action='store_true',
+    comp_parser.add_argument('--nsfw', action='store_true', 
                            help='Include NSFW platforms in scan')
     comp_parser.add_argument('--deep-scan', action='store_true',
                            help='Enable deep scanning mode')
-
+    
     # Plugin management
     plugin_parser = subparsers.add_parser('list-plugins', help='List available plugins')
-
+    
     plugin_info_parser = subparsers.add_parser('plugin-info', help='Get plugin information')
     plugin_info_parser.add_argument('-p', '--plugin', required=True, help='Plugin name')
-
+    
     # Global options
-    parser.add_argument('--output', choices=['json', 'txt'], default='json',
+    parser.add_argument('--output', choices=['json', 'txt'], default='json', 
                        help='Output format for reports')
-    parser.add_argument('--save-report', action='store_true',
+    parser.add_argument('--save-report', action='store_true', 
                        help='Save results to report file')
-    parser.add_argument('--plugins', nargs='+',
+    parser.add_argument('--plugins', nargs='+', 
                        help='Execute specific plugins (comma-separated or "all")')
     parser.add_argument('--silent', action='store_true',
                        help='Minimize output (results only)')
-
+    
     args = parser.parse_args()
-
+    
     # Initialize ELOHIM
     if not args.silent:
         ElohimLogger.banner()
-
+    
     elohim = ElohimCore()
-
+    
     # Handle wizard mode
     if args.wizard:
         wizard = WizardMode(elohim)
-        asyncio.run(wizard.run())
+        # Use run_async instead of asyncio.run for Python 3.6 compatibility
+        run_async(wizard.run())
         return
-
+    
     # Handle plugin management commands
     if args.command == 'list-plugins':
         plugins = elohim.plugin_manager.list_plugins()
@@ -1465,7 +1474,7 @@ def main():
             plugin_info = elohim.plugin_manager.get_plugin_info(plugin)
             print(f"  {Fore.GREEN}◢◤{Style.RESET_ALL} {plugin:<20} - {plugin_info.get('description', 'No description')}")
         return
-
+    
     if args.command == 'plugin-info':
         plugin_info = elohim.plugin_manager.get_plugin_info(args.plugin)
         if plugin_info:
@@ -1475,14 +1484,14 @@ def main():
         else:
             ElohimLogger.error(f"Plugin '{args.plugin}' not found")
         return
-
+    
     if not args.command:
         parser.print_help()
         return
-
+    
     async def run_scan():
         results = {}
-
+        
         try:
             if args.command == 'username':
                 results = await elohim.run_username_search(
@@ -1502,22 +1511,22 @@ def main():
                 )
             elif args.command == 'comprehensive':
                 results = await elohim.run_comprehensive_scan(
-                    args.target,
+                    args.target, 
                     getattr(args, 'nsfw', False),
                     getattr(args, 'deep_scan', False)
                 )
-
+            
             # Execute additional plugins if specified
             if hasattr(args, 'plugins') and args.plugins:
                 if 'all' in args.plugins:
                     selected_plugins = elohim.plugin_manager.list_plugins()
                 else:
                     selected_plugins = args.plugins
-
+                
                 for plugin_name in selected_plugins:
                     plugin_result = elohim.plugin_manager.execute_plugin(plugin_name, args.target)
                     results.update(plugin_result)
-
+            
             if args.save_report:
                 report_file = elohim.report_generator.generate_report(
                     args.target, results, args.output
@@ -1525,14 +1534,14 @@ def main():
                 ElohimLogger.success(f"Scan completed. Report saved: {report_file}")
             else:
                 ElohimLogger.success("Scan completed successfully")
-
+                
         except KeyboardInterrupt:
             ElohimLogger.warning("Scan interrupted by user")
         except Exception as e:
             ElohimLogger.error(f"Scan failed: {str(e)}")
-
-    # Run the async scan
-    asyncio.run(run_scan())
+    
+    # Use run_async instead of asyncio.run for Python 3.6 compatibility
+    run_async(run_scan())
 
 if __name__ == "__main__":
     main()
